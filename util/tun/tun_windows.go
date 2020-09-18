@@ -2,7 +2,7 @@ package tun
 
 import (
 	"fmt"
-	"github.com/lixiangyun/easymesh/util/ip"
+	"github.com/easymesh/easymesh/util/ip"
 	"golang.org/x/sys/windows"
 )
 

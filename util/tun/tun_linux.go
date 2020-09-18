@@ -3,7 +3,7 @@ package tun
 import (
 	"bytes"
 	"fmt"
-	"github.com/lixiangyun/easymesh/util/ip"
+	"github.com/easymesh/easymesh/util/ip"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"os"

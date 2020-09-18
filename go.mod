@@ -1,4 +1,4 @@
-module github.com/lixiangyun/easymesh
+module github.com/easymesh/easymesh
 
 go 1.14
 

@@ -3,7 +3,7 @@ package route
 import (
 	"encoding/json"
 	"github.com/astaxie/beego/logs"
-	"github.com/lixiangyun/easymesh/util/ip"
+	"github.com/easymesh/easymesh/util/ip"
 	"net"
 	"sync"
 	"time"
