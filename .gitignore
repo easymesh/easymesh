@@ -1,0 +1,5 @@
+.idea
+gateway/gateway
+transfer/transfer
+*.exe
+**/*.exe
