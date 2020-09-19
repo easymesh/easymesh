@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"time"
 )
 
 func OpenUdp(bindAddr string) (*net.UDPConn, error) {
@@ -55,4 +56,8 @@ func UnusedPort() int {
 		defer udpconn.Close()
 		return port
 	}
+}
+
+func init()  {
+	rand.Seed(int64(time.Now().Nanosecond()))
 }

@@ -43,6 +43,9 @@ type TunWin struct {
 	DevicePath       string
 	FD               windows.Handle
 	NetworkName      string
+
+	readBody         chan []byte
+	writeBody        chan []byte
 }
 
 func ctl_code(device_type, function, method, access uint32) uint32 {
@@ -157,6 +160,9 @@ func openTun(addr, network, mask net.IP) (*TunWin, error) {
 		return nil, err
 	}
 
+	tun.readBody = make(chan []byte, 1024)
+	tun.writeBody = make(chan []byte, 1024)
+
 	return tun, nil
 }
 
@@ -180,6 +186,9 @@ func (tun *TunWin) GetMTU(refresh bool) (uint32) {
 }
 
 func (tun *TunWin) Connect() error {
+	go tun.ReadEventTask()
+	go tun.WriteEventTask()
+
 	var returnLen uint32
 	inBuffer := []byte{1, 0, 0, 0}
 	err := windows.DeviceIoControl(

@@ -1,48 +1,62 @@
 package tun
 
 import (
-	"fmt"
+	"github.com/astaxie/beego/logs"
 	"github.com/easymesh/easymesh/util/ip"
 	"golang.org/x/sys/windows"
 )
 
 const WIN_TUN_DHCP_LEASE_TIME = 365*24*3600
 
-func (tun *TunWin)Write(p []byte) error {
+func (tun *TunWin)WriteEventTask()  {
 	hevent, err := windows.CreateEvent(nil, 0, 0, nil)
 	if err != nil {
-		return err
+		panic(err.Error())
 	}
+
+	defer windows.Close(hevent)
 
 	overlapped := new(windows.Overlapped)
 	overlapped.HEvent = hevent
 	var l1 uint32
 	var l2 uint32
 
-	err = windows.WriteFile(tun.FD, p, &l1, overlapped)
-	if err != nil {
-		if err == windows.ERROR_IO_PENDING {
-			for {
-				_, err = windows.WaitForSingleObject(overlapped.HEvent, 100)
-				if err != nil {
-					return fmt.Errorf("wait for single object fail, %s", err.Error())
+	for  {
+		body, flag := <- tun.writeBody
+		if flag == false {
+			return
+		}
+
+		err = windows.WriteFile(tun.FD, body, &l1, overlapped)
+		if err != nil {
+			if err == windows.ERROR_IO_PENDING {
+				for {
+					_, err = windows.WaitForSingleObject(overlapped.HEvent, 10)
+					if err != nil {
+						logs.Error("wait for single object fail, %s", err.Error())
+						return
+					}
+					err = windows.GetOverlappedResult(tun.FD, overlapped, &l2, false)
+					if err == windows.ERROR_IO_INCOMPLETE {
+						continue
+					} else {
+						break
+					}
 				}
-				err = windows.GetOverlappedResult(tun.FD, overlapped, &l2, false)
-				if err == windows.ERROR_IO_INCOMPLETE {
-					continue
-				} else {
-					break
-				}
+			} else {
+				logs.Error("windows write tun fail, %s", err.Error())
+				return
 			}
-		} else {
-			return fmt.Errorf("write file fail, %s", err.Error())
+		}
+
+		if abc(l1, l2) != len(body) {
+			logs.Error("tun send %d out of %d bytes", abc(l1, l2), len(body))
 		}
 	}
+}
 
-	if abc(l1, l2) != len(p) {
-		return fmt.Errorf("tun send %d out of %d bytes", abc(l1, l2), len(p))
-	}
-
+func (tun *TunWin)Write(p []byte) error {
+	tun.writeBody <- CloneBody(p)
 	return nil
 }
 
@@ -53,38 +67,59 @@ func abc(a uint32, b uint32) int {
 	return int(b)
 }
 
-func (tun *TunWin)Read(p []byte) (int, error) {
+func CloneBody(body []byte) []byte {
+	coBody := make([]byte, len(body))
+	copy(coBody, body)
+	return coBody
+}
+
+func (tun *TunWin)ReadEventTask() {
 	hevent, err := windows.CreateEvent(nil, 0, 0, nil)
 	if err != nil {
-		return 0, err
+		panic(err.Error())
 	}
+
+	defer windows.Close(hevent)
 
 	overlapped := new(windows.Overlapped)
 	overlapped.HEvent = hevent
 	var l1 uint32
 	var l2 uint32
 
-	err = windows.ReadFile(tun.FD, p, &l1, overlapped)
-	if err != nil {
-		if err == windows.ERROR_IO_PENDING {
-			for {
-				_, err = windows.WaitForSingleObject(overlapped.HEvent, 100)
-				if err != nil {
-					return 0, fmt.Errorf("wait for single object fail, %s", err.Error())
-				}
-				err = windows.GetOverlappedResult(tun.FD, overlapped, &l2, false)
-				if err == windows.ERROR_IO_INCOMPLETE {
-					continue
-				} else {
-					break
-				}
-			}
-		} else {
-			return 0, fmt.Errorf("read file fail, %s", err.Error())
-		}
-	}
+	var body [8192]byte
 
-	return abc(l1, l2), err
+	for  {
+		err = windows.ReadFile(tun.FD, body[:], &l1, overlapped)
+		if err != nil {
+			if err == windows.ERROR_IO_PENDING {
+				for {
+					_, err = windows.WaitForSingleObject(overlapped.HEvent, 10)
+					if err != nil {
+						logs.Error("wait for single object fail, %s", err.Error())
+						return
+					}
+					err = windows.GetOverlappedResult(tun.FD, overlapped, &l2, false)
+					if err == windows.ERROR_IO_INCOMPLETE {
+						continue
+					} else {
+						break
+					}
+				}
+			} else {
+				logs.Error("windows read tun fail, %s", err.Error())
+				return
+			}
+		}
+
+		tun.readBody <- CloneBody(body[:abc(l1, l2)])
+	}
+}
+
+
+func (tun *TunWin)Read(p []byte) (int, error) {
+	body := <- tun.readBody
+	copy(p, body)
+	return len(body), nil
 }
 
 func (tun *TunWin)Close() error {
