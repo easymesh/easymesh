@@ -64,6 +64,11 @@ func (t *Transfer)UdpRecvTask(conn *net.UDPConn, oAddr ip.IP4)  {
 			continue
 		}
 
+		if cnt < 1 {
+			logs.Error("recv bad body: %d, %s", cnt, srcAddr.String())
+			continue
+		}
+
 		pktType := ip.IPHeaderType(buff[0])
 		if pktType == ip.IPv4 {
 			t.TransferIP(conn, oAddr, srcAddr, buff[:cnt])

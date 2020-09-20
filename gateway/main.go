@@ -79,6 +79,11 @@ func UdpRecvTask(conn *net.UDPConn, tun tun.TunApi)  {
 			continue
 		}
 
+		if cnt < 1 {
+			logs.Error("recv bad body: %d, %s", cnt, srcAddr.String())
+			continue
+		}
+
 		pktType := ip.IPHeaderType(buff[0])
 		if pktType == ip.IPv4 {
 			if cnt < ip.MAX_IPHEADER {
