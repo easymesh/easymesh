@@ -132,6 +132,8 @@ linux：
 ./transfer -public you.domain.com -bind 8000 -nums 1000 -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
 ```
 
+注意：默认需要开启8000-9000的UDP端口；
+
 本地部署gateway程序；准备两台节点；
 
 参考命令：
@@ -139,13 +141,13 @@ linux：
 windows:
 
 ```
-gateway.exe -ip 172.168.3.1 -trans you.domain.com:5555 -iface "192.168.1.110" -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
+gateway.exe -ip 172.168.3.1 -trans you.domain.com:8000 -iface "192.168.1.110" -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
 ```
 
 linux：
 
 ```
-./gateway -ip 172.168.3.2 -trans you.domain.com:5555 -iface "eth0" -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
+./gateway -ip 172.168.3.2 -trans you.domain.com:8000 -iface "eth0" -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
 ```
 
 两个节点相互ping对方虚拟IP；
