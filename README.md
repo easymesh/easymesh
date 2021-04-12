@@ -44,11 +44,13 @@ Usage of transfer.exe:
   -help
         usage
   -log string
-        log dir (default "/opt/log")
+        log dir (default "./")
   -nums int
         transfer server instance nums (default 1000)
   -public string
-        public IP (default "www.youdomain.com")
+        public IP (default "www.domain.com")
+  -token string
+        access auth
 ```
 
 - -bind: 所需要绑定的UDP起始端口，注意转发transfer服务支持绑定多个端口，每个端口分别对于一个namespace，配合 -nums 参数，可以创建多个独立转发地址空间；默认端口范伟为：8000~9000，如果其中一个端口被占用，则会忽略并跳过该端口；
@@ -56,6 +58,7 @@ Usage of transfer.exe:
 - -log: 运行日志的目录地址；默认会记录30天运行日志，并且支持zip压缩；建议您保留大约1GB以上磁盘空间；
 - -nums: 命名空间数量，也对应服务实例数量，与-bind结合使用，请保留相应端口范围；
 - -public: 云服务主机对外IP或者域名；需要公网可以访问的IPv4地址；
+- -token: 用于校验gateway接入的身份；如果为空，会自动生成一个随机字符串；例如："s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
 
 注意：使用方式不区分windows、linux平台，启动后保持后台长时间运行即可；
 
@@ -69,18 +72,21 @@ Usage of gateway.exe:
   -help
         usage
   -iface string
-        used interface or ip address (default "eth0")
+        interface or ip (default "eth0")
   -ip string
-        virtual IP (default "172.168.0.1")
+        virtual ip (default "172.168.0.1")
   -log string
-        log dir (default "/opt/log")
+        log dir (default "./")
+  -token string
+        access auth
   -trans string
-        transfer public address (default "www.youdomain.com:8000")
+        transfer public address (default "www.domain.com:8000")
 ```
 
 *   -debug: 调试模式，所以日志将打印到控制台，不会输出到目录；方便问题定位；
 *   -ip: 在当前虚拟网络中的虚拟地址IP，目前支持IPv4地址，例如：`172.168.x.x`，默认`255.255.0.0`网段，注意：不能与自身其他网卡网段冲突；
 *   -log: 运行日志的目录地址；默认会记录30天运行日志，并且支持zip压缩；建议您保留大约1GB以上磁盘空间；
+*   -token: 用于登陆认证的token，需要和transfer的token保持一致；必须填写该字段；
 *   -trans: 连接相应转发服务，就是对应transfer的公网IP地址和端口；如果选用一个端口，那么其他需要加入同一个网络namespace的节点，端口需要保持一致；
 *   -iface: 绑定本地网卡名称或者IP地址，比如：在linux环境下面默认eth0，而windows相对复杂；可以通过 控制面板 -> 网络与共享中心 -> 更改适配器设置 里面进行查看；例如截图：[](https://github.com/easymesh/docs/blob/master/windows_eth.png) 对应名称为: `vEthernet (wlan)`或者查看IP地址方式，例如：linux 通过命令 `ifconfig` 查看相应IP地址，例如如下eth0对应的IP地址为：`192.168.3.2`
 
@@ -115,26 +121,31 @@ PING 172.168.3.1 (172.168.3.1) 56(84) bytes of data.
 64 bytes from 172.168.3.1: icmp_seq=3 ttl=126 time=2.85 ms
 ```
 
-### 5、测试环境
-为了方便大家测试，我们提供一台位于云主机服务器，已经部署transfer程序，提供大家测试使用，1Mb带宽，资源有限：
+### 5、部署实例
 
-121.37.163.197:5000 ~ 121.37.163.197:6000
-注意：任意选择一个端口测试即可，注意可能会有人同时使用一个端口；尽量测试完成后停止使用，避免与其他人冲突；
+在公有云主机启动部署transfer程序：
 
-大家在本地部署gateway程序就可以了；准备两台节点；
+参考命令：
+
+linux：
+```
+./transfer -public you.domain.com -bind 8000 -nums 1000 -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
+```
+
+本地部署gateway程序；准备两台节点；
 
 参考命令：
 
 windows:
 
 ```
-gateway.exe -ip 172.168.3.1 -trans 121.37.163.197:5555 -iface "vEthernet (wlan)" -debug
+gateway.exe -ip 172.168.3.1 -trans you.domain.com:5555 -iface "192.168.1.110" -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
 ```
 
 linux：
 
 ```
-./gateway -ip 172.168.3.2 -trans 121.37.163.197:5555 -iface "eth0" -debug
+./gateway -ip 172.168.3.2 -trans you.domain.com:5555 -iface "eth0" -token "s^I^ghGjkB7Zm$q14NWhxfQdS5E&FG7R"
 ```
 
 两个节点相互ping对方虚拟IP；
