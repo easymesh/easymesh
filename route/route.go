@@ -27,8 +27,9 @@ type UdpAddr struct {
 }
 
 type Route struct {
-	IP  ip.IP4
-	Udp []UdpAddr
+	Token string
+	IP    ip.IP4
+	Udp   []UdpAddr
 
 	timestamp time.Time
 }
@@ -45,7 +46,7 @@ func (u *UdpAddr)UsabilitySet(used int)  {
 	u.used = used
 }
 
-func NewRoute(ipAddr string, udpAddr UdpAddr) *Route {
+func NewRoute(ipAddr string, udpAddr UdpAddr, token string) *Route {
 	tmNow := time.Now()
 
 	ips, err := ip.ParseIP4(ipAddr)
@@ -54,7 +55,7 @@ func NewRoute(ipAddr string, udpAddr UdpAddr) *Route {
 		return nil
 	}
 	udpAddr.timestamp = tmNow
-	return &Route{IP: ips, Udp: []UdpAddr{udpAddr}, timestamp: tmNow}
+	return &Route{IP: ips, Token: token, Udp: []UdpAddr{udpAddr}, timestamp: tmNow}
 }
 
 func (r *Route)Usability(dst *net.UDPAddr)  {
@@ -87,7 +88,7 @@ func (r *Route)SyncAddr(newList []UdpAddr)  {
 func (r *Route)Clone() *Route {
 	tmNow := time.Now()
 
-	cp := &Route{IP: r.IP, timestamp: tmNow}
+	cp := &Route{IP: r.IP, Token: r.Token, timestamp: tmNow}
 	cp.Udp = make([]UdpAddr, len(r.Udp))
 	copy(cp.Udp, r.Udp)
 

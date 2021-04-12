@@ -1,5 +1,3 @@
-
-
 call :build_all linux 386
 call :build_all linux amd64
 
@@ -19,16 +17,14 @@ exit /b 0
 
     echo build %GOOS% %GOARCH%
 
-    rmdir /q/s output
-    mkdir output
+    rmdir /q/s easymesh
+    mkdir easymesh
 
-    go build -ldflags="-w -s" -o output\transfer%TAG% transfer\main.go
-    go build -ldflags="-w -s" -o output\gateway%TAG% gateway\main.go
+    go build -ldflags="-w -s" -o easymesh\transfer%TAG% transfer\main.go
+    go build -ldflags="-w -s" -o easymesh\gateway%TAG% gateway\main.go
 
-    cd output
-    tar -zcf ../%GOOS%_%GOARCH%.tar.gz *
-	cd ..
-	rmdir /q/s output
+    tar -zcf easymesh_%GOOS%_%GOARCH%.tar.gz easymesh
+	rmdir /q/s easymesh
 	
 goto :eof
 

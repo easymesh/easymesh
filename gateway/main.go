@@ -204,7 +204,7 @@ func transferRetry(trans *net.UDPAddr) error {
 	for i := 0; i < 3; i++ {
 		time.Sleep(5*time.Second)
 
-		r := route.NewRoute(OVER_IP, localUdpAddr)
+		r := route.NewRoute(OVER_IP, localUdpAddr, TOKEN)
 		_, err := udpconn.Write(udp.UdpCtrl(r.Coder()))
 		if err != nil {
 			logs.Error("udp write to transfer fail", err.Error())
@@ -276,7 +276,7 @@ func findRoute(ip4 ip.IP4) *net.UDPAddr {
 func UpdateRoute()  {
 	ticker := time.NewTicker(15*time.Second)
 	for  {
-		r := route.NewRoute(OVER_IP, localUdpAddr)
+		r := route.NewRoute(OVER_IP, localUdpAddr, TOKEN)
 
 		logs.Info("update local route to transfer", r.String(), transAddr.String())
 
@@ -398,27 +398,29 @@ var (
 	debug       bool
 
 	LOG_DIR     string
+	TOKEN       string
 
 	BIND_INFACE string
 	OVER_IP     string
 
 	TRANS_ADDR  string
+
+	BIND_PORT int
 )
 
 func init()  {
 	flag.BoolVar(&help, "help", false, "usage")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
 	flag.StringVar(&LOG_DIR, "log", "./", "log dir")
+	flag.StringVar(&TOKEN, "token", "", "access auth")
 	flag.StringVar(&BIND_INFACE, "iface", "eth0", "interface or ip")
 	flag.StringVar(&OVER_IP, "ip", "172.168.0.1", "virtual ip")
 	flag.StringVar(&TRANS_ADDR, "trans", "www.domain.com:8000", "transfer public address")
 }
 
-var BIND_PORT int
-
 func main()  {
 	flag.Parse()
-	if help {
+	if help || TOKEN == ""{
 		flag.Usage()
 		return
 	}

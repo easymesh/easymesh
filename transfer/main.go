@@ -17,6 +17,7 @@ type Transfer struct {
 	routeCtl   *route.RouteCtrl
 	transAddr  *net.UDPAddr
 	udpSocket  *net.UDPConn
+	token       string
 	oAddr       ip.IP4
 }
 
@@ -65,7 +66,7 @@ func (t *Transfer)UdpRecvTask(conn *net.UDPConn, oAddr ip.IP4)  {
 		}
 
 		if cnt < 1 {
-			logs.Error("recv bad body: %d, %s", cnt, srcAddr.String())
+			logs.Error("recv bad body: %s", srcAddr.String())
 			continue
 		}
 
@@ -82,10 +83,11 @@ func (t *Transfer)UdpRecvTask(conn *net.UDPConn, oAddr ip.IP4)  {
 	}
 }
 
-func NewTransfer(port int, pubip string) *Transfer {
+func NewTransfer(port int, pubip string, token string) *Transfer {
 	var err error
 
 	trans := new(Transfer)
+	trans.token = token
 	trans.routeCtl = route.NewRouteCtrl(time.Minute, time.Minute)
 
 	trans.udpSocket, err = udp.OpenUdp(fmt.Sprintf(":%d", port))
@@ -149,7 +151,12 @@ func (t *Transfer)findRoute(ip4 ip.IP4) *net.UDPAddr {
 func (t *Transfer)syncRoute(conn *net.UDPConn, srcAddr *net.UDPAddr, body []byte)  {
 	r := route.RouteDecoder(body)
 	if r == nil {
-		logs.Error("route decoder fail", string(body))
+		logs.Error("route decoder fail")
+		return
+	}
+
+	if r.Token != TOKEN {
+		logs.Error("route sync token illegal")
 		return
 	}
 
@@ -174,6 +181,8 @@ var (
 	help   bool
 	debug  bool
 
+	TOKEN       string
+
 	BIND_PORT   int
 	BIND_NUMS   int
 
@@ -184,6 +193,7 @@ var (
 func init()  {
 	flag.BoolVar(&help, "help", false, "usage")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
+	flag.StringVar(&TOKEN, "token", "", "access auth")
 	flag.StringVar(&LOG_DIR, "log", "./", "log dir")
 	flag.IntVar(&BIND_PORT, "bind", 8000, "transfer server bind port")
 	flag.IntVar(&BIND_NUMS, "nums", 1000, "transfer server instance nums")
@@ -199,10 +209,16 @@ func main()  {
 		return
 	}
 
+	if TOKEN == "" {
+		TOKEN = util.GetToken(32)
+	}
+
+	logs.Info("Token: %s", TOKEN)
+
 	util.LogInit(LOG_DIR, debug,"transfer.log")
 
 	for i := BIND_PORT ; i < (BIND_PORT + BIND_NUMS); i++ {
-		temp := NewTransfer(i, PUB_ADDR)
+		temp := NewTransfer(i, PUB_ADDR, TOKEN)
 		if temp != nil {
 			transList = append(transList, temp)
 		} else {
