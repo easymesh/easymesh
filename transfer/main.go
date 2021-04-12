@@ -184,13 +184,10 @@ var (
 func init()  {
 	flag.BoolVar(&help, "help", false, "usage")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
-
-	flag.StringVar(&LOG_DIR, "log", "/opt/log", "log dir")
-
+	flag.StringVar(&LOG_DIR, "log", "./", "log dir")
 	flag.IntVar(&BIND_PORT, "bind", 8000, "transfer server bind port")
 	flag.IntVar(&BIND_NUMS, "nums", 1000, "transfer server instance nums")
-
-	flag.StringVar(&PUB_ADDR, "public", "www.youdomain.com", "public IP")
+	flag.StringVar(&PUB_ADDR, "public", "www.domain.com", "public IP")
 }
 
 var transList []*Transfer
@@ -202,9 +199,7 @@ func main()  {
 		return
 	}
 
-	if !debug {
-		util.LogInit(LOG_DIR,"transfer.log")
-	}
+	util.LogInit(LOG_DIR, debug,"transfer.log")
 
 	for i := BIND_PORT ; i < (BIND_PORT + BIND_NUMS); i++ {
 		temp := NewTransfer(i, PUB_ADDR)

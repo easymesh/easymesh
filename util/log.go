@@ -18,9 +18,17 @@ type logconfig struct {
 	Color    bool    `json:"color"`
 }
 
-var logCfg = logconfig{Filename: os.Args[0], Level: 7, Daily: true, MaxDays: 30, Color: true}
+var logCfg = logconfig{
+	Filename: os.Args[0],
+	Level: logs.LevelInformational,
+	Daily: true,
+	MaxSize: 10*1024*1024,
+	MaxLines: 100*1024,
+	MaxDays: 7,
+	Color: false,
+}
 
-func LogInit(dir string, filename string)  {
+func LogInit(dir string, debug bool, filename string)  {
 	os.MkdirAll(dir, 0644)
 
 	logCfg.Filename = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, filename)
@@ -28,10 +36,16 @@ func LogInit(dir string, filename string)  {
 	if err != nil {
 		panic(err.Error())
 	}
-	logs.Async()
-	err = logs.SetLogger(logs.AdapterFile, string(value))
+	if debug {
+		err = logs.SetLogger(logs.AdapterConsole)
+	} else {
+		err = logs.SetLogger(logs.AdapterFile, string(value))
+	}
 	if err != nil {
 		panic(err.Error())
 	}
+	logs.Async(100)
+	logs.EnableFuncCallDepth(true)
+	logs.SetLogFuncCallDepth(3)
 }
 

@@ -408,11 +408,10 @@ var (
 func init()  {
 	flag.BoolVar(&help, "help", false, "usage")
 	flag.BoolVar(&debug, "debug", false, "debug mode")
-
-	flag.StringVar(&LOG_DIR, "log", "/opt/log", "log dir")
-	flag.StringVar(&BIND_INFACE, "iface", "eth0", "used interface or ip address")
-	flag.StringVar(&OVER_IP, "ip", "172.168.0.1", "virtual IP")
-	flag.StringVar(&TRANS_ADDR, "trans", "www.youdomain.com:8000", "transfer public address")
+	flag.StringVar(&LOG_DIR, "log", "./", "log dir")
+	flag.StringVar(&BIND_INFACE, "iface", "eth0", "interface or ip")
+	flag.StringVar(&OVER_IP, "ip", "172.168.0.1", "virtual ip")
+	flag.StringVar(&TRANS_ADDR, "trans", "www.domain.com:8000", "transfer public address")
 }
 
 var BIND_PORT int
@@ -424,9 +423,9 @@ func main()  {
 		return
 	}
 
-	if !debug {
-		util.LogInit(LOG_DIR,"gateway.log")
-	}
+	util.LogInit(LOG_DIR, debug,"gateway.log")
+
+	BIND_PORT = udp.UnusedPort()
 
 	err := initIface()
 	if err != nil {
@@ -439,8 +438,6 @@ func main()  {
 		logs.Error(err.Error())
 		return
 	}
-
-	BIND_PORT = udp.UnusedPort()
 
 	err = initUdp(fmt.Sprintf(":%d", BIND_PORT))
 	if err != nil {
